@@ -6,17 +6,18 @@ import { Component, OnInit } from '@angular/core';
 	styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
-	private secretKey!: ArrayBuffer;
-	private iv!: Uint8Array;
+	private secretKey!: string;
+	private iv!: string;
 
 	ngOnInit(): void {
-		//! AQUI ESTOU GERANDO UMA CHAVE ALEATÓRIA, MAS VOCÊ PODE USAR UMA CHAVE QUE VOCÊ QUISER
-		//! (EX: '12345678901234567890123456789012') de 32 caracteres (256 bits)
-		//! além de gerar o IV (INITIALIZATION VECTOR)
-		//! que é um vetor de inicialização que é usado para criptografar e descriptografar
 		this.generateKeyAndIV().then((result) => {
 			console.log(result);
+			this.secretKey = result.secretKey;
+			this.iv = result.iv;
 		});
+
+		console.log(`SecretKey: ${this.secretKey}`);
+		console.log(`IV: ${this.iv}`);
 	}
 
 	criptografar() {
@@ -31,14 +32,17 @@ export class AppComponent implements OnInit {
 	descriptografar() {
 		const text = (document.getElementById('output') as HTMLInputElement)
 			.value;
-		this.decrypt(text).then((result) => {
-			console.log(result);
-		});
+		if (text) {
+			this.decrypt(text).then((result) => {
+				(document.getElementById('output') as HTMLInputElement).value =
+					result;
+			});
+		}
 	}
 
-	async generateKeyAndIV(): Promise<void> {
+	async generateKeyAndIV(): Promise<{ secretKey: string; iv: string }> {
 		try {
-			const keyAndIv = await window.crypto.subtle.generateKey(
+			const key = await window.crypto.subtle.generateKey(
 				{
 					name: 'AES-GCM',
 					length: 256,
@@ -46,74 +50,92 @@ export class AppComponent implements OnInit {
 				true,
 				['encrypt', 'decrypt']
 			);
-			const key = await window.crypto.subtle.exportKey('raw', keyAndIv);
-			this.secretKey = new Uint8Array(key);
-			this.iv = new Uint8Array(12);
-			window.crypto.getRandomValues(this.iv);
-			console.log('Key: ', this.secretKey);
-			console.log('IV: ', this.iv);
+
+			const exportedKey = await window.crypto.subtle.exportKey(
+				'raw',
+				key
+			);
+			const secretKey = this.arrayBufferToHexString(exportedKey);
+
+			const iv = window.crypto.getRandomValues(new Uint8Array(12));
+			const ivHex = this.arrayBufferToHexString(iv);
+
+			return { secretKey, iv: ivHex };
 		} catch (error) {
 			console.error(error);
+			throw error;
 		}
 	}
 
-	async encrypt(plaintext: string): Promise<string> {
+	async encrypt(data: string): Promise<string> {
 		try {
-			const data = new TextEncoder().encode(plaintext);
 			const key = await window.crypto.subtle.importKey(
 				'raw',
-				this.secretKey,
-				{ name: 'AES-GCM', length: 256 },
+				this.hexStringToArrayBuffer(this.secretKey),
+				{
+					name: 'AES-GCM',
+				},
 				false,
 				['encrypt']
 			);
-			const encryptedData = await window.crypto.subtle.encrypt(
+
+			const iv = this.hexStringToArrayBuffer(this.iv);
+
+			const encrypted = await window.crypto.subtle.encrypt(
 				{
 					name: 'AES-GCM',
-					iv: this.iv,
+					iv,
 				},
 				key,
-				data
+				new TextEncoder().encode(data)
 			);
-			return btoa(
-				new Uint8Array(encryptedData).reduce(
-					(data, byte) => data + String.fromCharCode(byte),
-					''
-				)
-			);
+
+			return this.arrayBufferToHexString(encrypted);
 		} catch (error) {
 			console.error(error);
-			return error as unknown as string;
+			throw error;
 		}
 	}
 
-	async decrypt(ciphertext: string): Promise<string> {
+	async decrypt(encryptedData: string): Promise<string> {
 		try {
-			const decoder = new TextDecoder();
-			const data = new Uint8Array(
-				atob(ciphertext)
-					.split('')
-					.map((c) => c.charCodeAt(0))
-			);
 			const key = await window.crypto.subtle.importKey(
 				'raw',
-				this.secretKey,
-				{ name: 'AES-GCM', length: 256 },
+				this.hexStringToArrayBuffer(this.secretKey),
+				{
+					name: 'AES-GCM',
+				},
 				false,
 				['decrypt']
 			);
-			const decryptedData = await window.crypto.subtle.decrypt(
+
+			const iv = this.hexStringToArrayBuffer(this.iv);
+
+			const decryptedArray = await window.crypto.subtle.decrypt(
 				{
 					name: 'AES-GCM',
-					iv: this.iv,
+					iv,
 				},
 				key,
-				data
+				this.hexStringToArrayBuffer(encryptedData)
 			);
-			return decoder.decode(new Uint8Array(decryptedData));
+
+			return new TextDecoder().decode(decryptedArray);
 		} catch (error) {
 			console.error(error);
-			return error as unknown as string;
+			throw error;
 		}
+	}
+
+	arrayBufferToHexString(buffer: ArrayBuffer): string {
+		return Array.from(new Uint8Array(buffer))
+			.map((b) => b.toString(16).padStart(2, '0'))
+			.join('');
+	}
+
+	hexStringToArrayBuffer(hexString: string): ArrayBuffer {
+		return new Uint8Array(
+			hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+		).buffer;
 	}
 }
