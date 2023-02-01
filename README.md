@@ -10,31 +10,18 @@ Para instalar esse pacote, você precisa ter o Node.js e o Angular CLI instalado
 npm install code-decode-string
 ```
 
-## Uso
+## Utilização
+
+Após a instalação das dependências, você pode iniciar o servidor local executando o comando `ng serve`. Assim, você pode acessar a interface de usuário através da URL http://localhost:4200/.
+
+Na interface de usuário, você encontrará um campo para inserir uma string e os botões para codificar e decodificar a string. Ao clicar em um dos botões, a string será codificada ou decodificada e exibida na tela.
+
+## Funções
 
 Para usar esse pacote, você precisa importá-lo em seu arquivo Angular. Em seguida, você pode usar as seguintes funções:
 
--   `generateKeyAndIV()`: Essa função gera uma chave secreta de 32 caracteres e um vetor de inicialização (IV) aleatórios. Ela retorna um objeto com duas propriedades: secretKey e iv. (Ela pode ser capturada no console do navegador e salva no environments.)
+-   `generateKeyAndIV()`: Essa função gera uma chave secreta de 32 caracteres e um vetor de inicialização (IV) aleatório. Ela retorna um objeto com duas propriedades: secretKey e iv. (Ela pode ser capturada no console do navegador e salva no environments.)
 
 -   `encrypt(text: string, secretKey: string, iv: string)`: Essa função recebe como parâmetros a string a ser criptografada, a chave secreta e o IV. Ela retorna a string criptografada.
 
 -   `decrypt(encryptedText: string, secretKey: string, iv: string)`: Essa função recebe como parâmetros a string criptografada, a chave secreta e o IV. Ela retorna a string original.
-
-## Exemplo
-
-A seguir, mostramos um exemplo de como usar esse pacote:
-
-````javascript
-import { generateKeyAndIV, encrypt, decrypt } from 'code-decode-string';
-
- const text = 'Texto sensível';
- generateKeyAndIV().then(result => {
-   const secretKey = result.secretKey;
-   const iv = result.iv;
-   const encryptedText = encrypt(text, secretKey, iv);
-   console.log('Texto criptografado:', encryptedText);
-   const decryptedText = decrypt(encryptedText, secretKey, iv);
-   console.log('Texto original:', decryptedText);    });     ```
-
-Esperamos que esse pacote seja útil para você! Se tiver alguma dúvida ou sugestão, por favor entre em contato.
-````
