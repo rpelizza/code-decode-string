@@ -1,27 +1,40 @@
-# CodeDecodeString
+# Code-Decode-String
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.2.
+Esse é um pacote para codificar e decodificar strings usando AES. Ele foi criado com o objetivo de tornar mais fácil o processo de criptografia de dados sensíveis. Ele utiliza o framework Angular para gerenciar a parte de front-end e as bibliotecas crypto-js e aes-js para realizar as operações de criptografia.
 
-## Development server
+## Instalação
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Para instalar esse pacote, você precisa ter o Node.js e o Angular CLI instalados em sua máquina. Então, basta rodar o seguinte comando no terminal:
 
-## Code scaffolding
+```sh
+npm install code-decode-string
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Uso
 
-## Build
+Para usar esse pacote, você precisa importá-lo em seu arquivo Angular. Em seguida, você pode usar as seguintes funções:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+-   `generateKeyAndIV()`: Essa função gera uma chave secreta de 32 caracteres e um vetor de inicialização (IV) aleatórios. Ela retorna um objeto com duas propriedades: secretKey e iv. (Ela pode ser capturada no console do navegador e salva no environments.)
 
-## Running unit tests
+-   `encrypt(text: string, secretKey: string, iv: string)`: Essa função recebe como parâmetros a string a ser criptografada, a chave secreta e o IV. Ela retorna a string criptografada.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+-   `decrypt(encryptedText: string, secretKey: string, iv: string)`: Essa função recebe como parâmetros a string criptografada, a chave secreta e o IV. Ela retorna a string original.
 
-## Running end-to-end tests
+## Exemplo
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+A seguir, mostramos um exemplo de como usar esse pacote:
 
-## Further help
+````javascript
+import { generateKeyAndIV, encrypt, decrypt } from 'code-decode-string';
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+ const text = 'Texto sensível';
+ generateKeyAndIV().then(result => {
+   const secretKey = result.secretKey;
+   const iv = result.iv;
+   const encryptedText = encrypt(text, secretKey, iv);
+   console.log('Texto criptografado:', encryptedText);
+   const decryptedText = decrypt(encryptedText, secretKey, iv);
+   console.log('Texto original:', decryptedText);    });     ```
+
+Esperamos que esse pacote seja útil para você! Se tiver alguma dúvida ou sugestão, por favor entre em contato.
+````
